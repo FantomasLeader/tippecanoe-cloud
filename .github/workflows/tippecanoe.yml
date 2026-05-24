@@ -1,0 +1,40 @@
+name: Generation Tippecanoe en Ligne
+
+on:
+  workflow_dispatch: # Déclencheur manuel via l'interface web
+
+jobs:
+  build-mbtiles:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Copier les fichiers du dépôt sur la machine virtuelle GitHub
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      # 2. Installer les dépendances système requises pour Tippecanoe
+      - name: Installer les dépendances
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsqlite3-dev zlib1g-dev
+
+      # 3. Récupérer et compiler la version officielle de Tippecanoe (Felt)
+      - name: Compiler Tippecanoe
+        run: |
+          git clone https://github.com/felt/tippecanoe.git
+          cd tippecanoe
+          make -j$(nproc)
+          sudo make install
+
+      # 4. Exécuter votre commande Tippecanoe
+      - name: Générer le fichier MBTiles
+        run: |
+          tippecanoe -o bassin_arcachon.mbtiles test_bassin.geojson
+
+      # 5. Rendre le fichier généré téléchargeable dans l'interface
+      - name: Sauvegarder le résultat (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mes-tuiles-mbtiles
+          path: bassin_arcachon.mbtiles
+          retention-days: 5 # Le fichier reste disponible 5 jours
