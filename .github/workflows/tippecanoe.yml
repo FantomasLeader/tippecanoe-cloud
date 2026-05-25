@@ -1,12 +1,7 @@
-name: Generation Tippecanoe Dynamique
+name: Generation Tippecanoe Multi-Fichiers
 
 on:
-  workflow_dispatch:
-    inputs:
-      geojson_filename:
-        description: 'Nom du fichier GeoJSON à compiler'
-        required: true
-        default: 'data.geojson'
+  workflow_dispatch: # Plus besoin d'inputs ici, le script Python dépose les fichiers directement
 
 jobs:
   build-mbtiles:
@@ -28,10 +23,14 @@ jobs:
           make -j$(nproc)
           sudo make install
 
-      - name: Générer le fichier MBTiles
+      # Vérification visuelle des fichiers reçus dans les logs GitHub
+      - name: Lister les fichiers GeoJSON reçus
+        run: ls -la *.geojson
+
+      # Tippecanoe fusionne automatiquement tous les .geojson trouvés
+      - name: Générer le fichier MBTiles global
         run: |
-          # Utilisation de l'input envoyé par Python
-          tippecanoe -o result.mbtiles "${{ github.event.inputs.geojson_filename }}"
+          tippecanoe -o result.mbtiles *.geojson
 
       - name: Sauvegarder le résultat
         uses: actions/upload-artifact@v4
